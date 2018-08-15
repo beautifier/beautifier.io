@@ -1836,13 +1836,19 @@ function OutputLine(parent) {
   this._character_count = 0;
   // use indent_count as a marker for this._lines that have preserved indentation
   this._indent_count = -1;
+  this._alignment_count = 0;
 
   this._items = [];
 }
 
 OutputLine.prototype.set_indent = function(level) {
-  this._character_count = this._parent.baseIndentLength + level * this._parent.indent_length;
   this._indent_count = level;
+  this._character_count = this._parent.baseIndentLength + this._alignment_count + this._indent_count * this._parent.indent_length;
+};
+
+OutputLine.prototype.set_alignment = function(level) {
+  this._alignment_count = level;
+  this._character_count = this._parent.baseIndentLength + this._alignment_count + this._indent_count * this._parent.indent_length;
 };
 
 OutputLine.prototype.get_character_count = function() {
@@ -1864,6 +1870,14 @@ OutputLine.prototype.last = function() {
 OutputLine.prototype.push = function(item) {
   this._items.push(item);
   this._character_count += item.length;
+};
+
+OutputLine.prototype.push_raw = function(item) {
+  this.push(item);
+  var last_newline_index = item.lastIndexOf('\n');
+  if (last_newline_index !== -1) {
+    this._character_count = item.length - last_newline_index;
+  }
 };
 
 OutputLine.prototype.pop = function() {
@@ -1893,7 +1907,10 @@ OutputLine.prototype.toString = function() {
   var result = '';
   if (!this.is_empty()) {
     if (this._indent_count >= 0) {
-      result = this._parent.indent_cache[this._indent_count];
+      result = this._parent.get_indent_string(this._indent_count);
+    }
+    if (this._alignment_count >= 0) {
+      result += this._parent.get_alignment_string(this._alignment_count);
     }
     result += this._items.join('');
   }
@@ -1903,7 +1920,8 @@ OutputLine.prototype.toString = function() {
 
 function Output(indent_string, baseIndentString) {
   baseIndentString = baseIndentString || '';
-  this.indent_cache = [baseIndentString];
+  this._indent_cache = [baseIndentString];
+  this._alignment_cache = [''];
   this.baseIndentLength = baseIndentString.length;
   this.indent_length = indent_string.length;
   this.raw = false;
@@ -1927,6 +1945,23 @@ Output.prototype.add_outputline = function() {
 Output.prototype.get_line_number = function() {
   return this._lines.length;
 };
+
+Output.prototype.get_indent_string = function(level) {
+  while (level >= this._indent_cache.length) {
+    this._indent_cache.push(this._indent_cache[this._indent_cache.length - 1] + this.indent_string);
+  }
+
+  return this._indent_cache[level];
+};
+
+Output.prototype.get_alignment_string = function(level) {
+  while (level >= this._alignment_cache.length) {
+    this._alignment_cache.push(this._alignment_cache[this._alignment_cache.length - 1] + ' ');
+  }
+
+  return this._alignment_cache[level];
+};
+
 
 // Using object instead of string to allow for later expansion of info about each line
 Output.prototype.add_new_line = function(force_newline) {
@@ -1961,10 +1996,6 @@ Output.prototype.get_code = function(end_with_newline, eol) {
 Output.prototype.set_indent = function(level) {
   // Never indent your first output indent at the start of the file
   if (this._lines.length > 1) {
-    while (level >= this.indent_cache.length) {
-      this.indent_cache.push(this.indent_cache[this.indent_cache.length - 1] + this.indent_string);
-    }
-
     this.current_line.set_indent(level);
     return true;
   }
@@ -1972,12 +2003,23 @@ Output.prototype.set_indent = function(level) {
   return false;
 };
 
+Output.prototype.set_alignment = function(level) {
+  // Never indent your first output indent at the start of the file
+  if (this._lines.length > 1) {
+    this.current_line.set_alignment(level);
+    return true;
+  }
+  this.current_line.set_alignment(0);
+  return false;
+};
+
+
 Output.prototype.add_raw_token = function(token) {
   for (var x = 0; x < token.newlines; x++) {
     this.add_outputline();
   }
   this.current_line.push(token.whitespace_before);
-  this.current_line.push(token.text);
+  this.current_line.push_raw(token.text);
   this.space_before_token = false;
 };
 
@@ -2802,16 +2844,17 @@ Tokenizer.prototype.tokenize = function() {
     current.parent = open_token;
 
     if (this.is_opening(current)) {
-      current.opened = open_token;
       open_stack.push(open_token);
       open_token = current;
     } else if (open_token && this.is_closing(current, open_token)) {
       current.opened = open_token;
+      open_token.closed = current;
       open_token = open_stack.pop();
       current.parent = open_token;
     }
 
     current.previous = previous;
+    previous.next = current;
 
     this._tokens.add(current);
     previous = current;
@@ -2922,8 +2965,10 @@ function Token(type, text, newlines, whitespace_before) {
   this.newlines = newlines || 0;
   this.whitespace_before = whitespace_before || '';
   this.parent = null;
+  this.next = null;
   this.previous = null;
   this.opened = null;
+  this.closed = null;
   this.directives = null;
 }
 

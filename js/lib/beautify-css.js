@@ -324,13 +324,19 @@ function OutputLine(parent) {
   this._character_count = 0;
   // use indent_count as a marker for this._lines that have preserved indentation
   this._indent_count = -1;
+  this._alignment_count = 0;
 
   this._items = [];
 }
 
 OutputLine.prototype.set_indent = function(level) {
-  this._character_count = this._parent.baseIndentLength + level * this._parent.indent_length;
   this._indent_count = level;
+  this._character_count = this._parent.baseIndentLength + this._alignment_count + this._indent_count * this._parent.indent_length;
+};
+
+OutputLine.prototype.set_alignment = function(level) {
+  this._alignment_count = level;
+  this._character_count = this._parent.baseIndentLength + this._alignment_count + this._indent_count * this._parent.indent_length;
 };
 
 OutputLine.prototype.get_character_count = function() {
@@ -352,6 +358,14 @@ OutputLine.prototype.last = function() {
 OutputLine.prototype.push = function(item) {
   this._items.push(item);
   this._character_count += item.length;
+};
+
+OutputLine.prototype.push_raw = function(item) {
+  this.push(item);
+  var last_newline_index = item.lastIndexOf('\n');
+  if (last_newline_index !== -1) {
+    this._character_count = item.length - last_newline_index;
+  }
 };
 
 OutputLine.prototype.pop = function() {
@@ -381,7 +395,10 @@ OutputLine.prototype.toString = function() {
   var result = '';
   if (!this.is_empty()) {
     if (this._indent_count >= 0) {
-      result = this._parent.indent_cache[this._indent_count];
+      result = this._parent.get_indent_string(this._indent_count);
+    }
+    if (this._alignment_count >= 0) {
+      result += this._parent.get_alignment_string(this._alignment_count);
     }
     result += this._items.join('');
   }
@@ -391,7 +408,8 @@ OutputLine.prototype.toString = function() {
 
 function Output(indent_string, baseIndentString) {
   baseIndentString = baseIndentString || '';
-  this.indent_cache = [baseIndentString];
+  this._indent_cache = [baseIndentString];
+  this._alignment_cache = [''];
   this.baseIndentLength = baseIndentString.length;
   this.indent_length = indent_string.length;
   this.raw = false;
@@ -415,6 +433,23 @@ Output.prototype.add_outputline = function() {
 Output.prototype.get_line_number = function() {
   return this._lines.length;
 };
+
+Output.prototype.get_indent_string = function(level) {
+  while (level >= this._indent_cache.length) {
+    this._indent_cache.push(this._indent_cache[this._indent_cache.length - 1] + this.indent_string);
+  }
+
+  return this._indent_cache[level];
+};
+
+Output.prototype.get_alignment_string = function(level) {
+  while (level >= this._alignment_cache.length) {
+    this._alignment_cache.push(this._alignment_cache[this._alignment_cache.length - 1] + ' ');
+  }
+
+  return this._alignment_cache[level];
+};
+
 
 // Using object instead of string to allow for later expansion of info about each line
 Output.prototype.add_new_line = function(force_newline) {
@@ -449,10 +484,6 @@ Output.prototype.get_code = function(end_with_newline, eol) {
 Output.prototype.set_indent = function(level) {
   // Never indent your first output indent at the start of the file
   if (this._lines.length > 1) {
-    while (level >= this.indent_cache.length) {
-      this.indent_cache.push(this.indent_cache[this.indent_cache.length - 1] + this.indent_string);
-    }
-
     this.current_line.set_indent(level);
     return true;
   }
@@ -460,12 +491,23 @@ Output.prototype.set_indent = function(level) {
   return false;
 };
 
+Output.prototype.set_alignment = function(level) {
+  // Never indent your first output indent at the start of the file
+  if (this._lines.length > 1) {
+    this.current_line.set_alignment(level);
+    return true;
+  }
+  this.current_line.set_alignment(0);
+  return false;
+};
+
+
 Output.prototype.add_raw_token = function(token) {
   for (var x = 0; x < token.newlines; x++) {
     this.add_outputline();
   }
   this.current_line.push(token.whitespace_before);
-  this.current_line.push(token.text);
+  this.current_line.push_raw(token.text);
   this.space_before_token = false;
 };
 
@@ -926,6 +968,7 @@ function Beautifier(source_text, options) {
     var insidePropertyValue = false;
     var enteringConditionalGroup = false;
     var insideAtExtend = false;
+    var insideAtImport = false;
 
     while (true) {
       var whitespace = input.read(whitespacePattern);
@@ -983,6 +1026,8 @@ function Beautifier(source_text, options) {
 
           if (variableOrRule === 'extend') {
             insideAtExtend = true;
+          } else if (variableOrRule === 'import') {
+            insideAtImport = true;
           }
 
           // might be a nesting at-rule
@@ -994,6 +1039,7 @@ function Beautifier(source_text, options) {
             // might be less variable
           } else if (!insideRule && parenLevel === 0 && variableOrRule.indexOf(':') !== -1) {
             insidePropertyValue = true;
+            indent();
           }
         }
       } else if (ch === '#' && input.peek() === '{') {
@@ -1011,6 +1057,10 @@ function Beautifier(source_text, options) {
             output.add_new_line(true);
           }
         } else {
+          if (insidePropertyValue) {
+            insidePropertyValue = false;
+            outdent();
+          }
           indent();
           output.space_before_token = true;
           print_string(ch);
@@ -1029,9 +1079,14 @@ function Beautifier(source_text, options) {
       } else if (ch === '}') {
         outdent();
         output.add_new_line();
+        insideAtImport = false;
+        insideAtExtend = false;
+        if (insidePropertyValue) {
+          outdent();
+          insidePropertyValue = false;
+        }
         print_string(ch);
         insideRule = false;
-        insidePropertyValue = false;
         if (nestedLevel) {
           nestedLevel--;
         }
@@ -1052,6 +1107,8 @@ function Beautifier(source_text, options) {
           if (!insidePropertyValue) {
             insidePropertyValue = true;
             output.space_before_token = true;
+            eatWhitespace(true);
+            indent();
           }
         } else {
           // sass/less parent reference don't use a space
@@ -1073,9 +1130,14 @@ function Beautifier(source_text, options) {
       } else if (ch === '"' || ch === '\'') {
         preserveSingleSpace(isAfterSpace);
         print_string(ch + eatString(ch));
+        eatWhitespace(true);
       } else if (ch === ';') {
-        insidePropertyValue = false;
+        if (insidePropertyValue) {
+          outdent();
+          insidePropertyValue = false;
+        }
         insideAtExtend = false;
+        insideAtImport = false;
         print_string(ch);
         eatWhitespace(true);
 
@@ -1111,7 +1173,7 @@ function Beautifier(source_text, options) {
       } else if (ch === ',') {
         print_string(ch);
         eatWhitespace(true);
-        if (selectorSeparatorNewline && !insidePropertyValue && parenLevel < 1) {
+        if (selectorSeparatorNewline && !insidePropertyValue && parenLevel < 1 && !insideAtImport) {
           output.add_new_line();
         } else {
           output.space_before_token = true;

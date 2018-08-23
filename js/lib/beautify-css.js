@@ -155,35 +155,38 @@ var legacy_beautify_css =
 /* 0 */,
 /* 1 */,
 /* 2 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-/*jshint curly:true, eqeqeq:true, laxbreak:true, noempty:false */
+"use strict";
+/*jshint node:true */
 /*
 
-    The MIT License (MIT)
+  The MIT License (MIT)
 
-    Copyright (c) 2007-2018 Einar Lielmanis, Liam Newman, and contributors.
+  Copyright (c) 2007-2018 Einar Lielmanis, Liam Newman, and contributors.
 
-    Permission is hereby granted, free of charge, to any person
-    obtaining a copy of this software and associated documentation files
-    (the "Software"), to deal in the Software without restriction,
-    including without limitation the rights to use, copy, modify, merge,
-    publish, distribute, sublicense, and/or sell copies of the Software,
-    and to permit persons to whom the Software is furnished to do so,
-    subject to the following conditions:
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation files
+  (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be
-    included in all copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-    BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
 */
+
+
 
 // merges child options up with the parent options object
 // Example: obj = {a: 1, b: {a: 2}}
@@ -209,13 +212,26 @@ function mergeOpts(allOptions, childFieldName) {
   return finalOpts;
 }
 
+function normalizeOpts(options) {
+  var convertedOpts = {};
+  var key;
+
+  for (key in options) {
+    var newKey = key.replace(/-/g, "_");
+    convertedOpts[newKey] = options[key];
+  }
+  return convertedOpts;
+}
+
 module.exports.mergeOpts = mergeOpts;
+module.exports.normalizeOpts = normalizeOpts;
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-/* jshint curly: false */
+"use strict";
+/* jshint node: true, curly: false */
 // This section of code is taken from acorn.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -233,6 +249,8 @@ module.exports.mergeOpts = mergeOpts;
 // whitespace, identifier, and identifier-start categories. These
 // are only applied when a character is found to actually have a
 // code point above 128.
+
+
 
 var nonASCIIwhitespace = /[\u1680\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]/; // jshint ignore:line
 var baseASCIIidentifierStartChars = "\x24\x40\x41-\x5a\x5f\x61-\x7a";
@@ -289,9 +307,10 @@ exports.isIdentifierChar = function(code) {
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-/*jshint curly:true, eqeqeq:true, laxbreak:true, noempty:false */
+"use strict";
+/*jshint node:true */
 /*
 
   The MIT License (MIT)
@@ -318,6 +337,8 @@ exports.isIdentifierChar = function(code) {
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
+
+
 
 function OutputLine(parent) {
   this.__parent = parent;
@@ -591,9 +612,10 @@ module.exports.Output = Output;
 /***/ }),
 /* 5 */,
 /* 6 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-/*jshint curly:true, eqeqeq:true, laxbreak:true, noempty:false */
+"use strict";
+/*jshint node:true */
 /*
 
   The MIT License (MIT)
@@ -620,6 +642,8 @@ module.exports.Output = Output;
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
+
+
 
 function InputScanner(input_string) {
   this.__input = input_string || '';
@@ -748,48 +772,8 @@ module.exports.InputScanner = InputScanner;
 /* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/*jshint curly:true, eqeqeq:true, laxbreak:true, noempty:false */
-/*
-
-    The MIT License (MIT)
-
-    Copyright (c) 2007-2018 Einar Lielmanis, Liam Newman, and contributors.
-
-    Permission is hereby granted, free of charge, to any person
-    obtaining a copy of this software and associated documentation files
-    (the "Software"), to deal in the Software without restriction,
-    including without limitation the rights to use, copy, modify, merge,
-    publish, distribute, sublicense, and/or sell copies of the Software,
-    and to permit persons to whom the Software is furnished to do so,
-    subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be
-    included in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-    BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-*/
-
-var Beautifier = __webpack_require__(12).Beautifier;
-
-function css_beautify(source_text, options) {
-  var beautifier = new Beautifier(source_text, options);
-  return beautifier.beautify();
-}
-
-module.exports = css_beautify;
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/*jshint curly:true, eqeqeq:true, laxbreak:true, noempty:false */
+"use strict";
+/*jshint node:true */
 /*
 
   The MIT License (MIT)
@@ -817,7 +801,54 @@ module.exports = css_beautify;
   SOFTWARE.
 */
 
+
+
+var Beautifier = __webpack_require__(12).Beautifier;
+
+function css_beautify(source_text, options) {
+  var beautifier = new Beautifier(source_text, options);
+  return beautifier.beautify();
+}
+
+module.exports = css_beautify;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*jshint node:true */
+/*
+
+  The MIT License (MIT)
+
+  Copyright (c) 2007-2018 Einar Lielmanis, Liam Newman, and contributors.
+
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation files
+  (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+*/
+
+
+
 var mergeOpts = __webpack_require__(2).mergeOpts;
+var normalizeOpts = __webpack_require__(2).normalizeOpts;
 var acorn = __webpack_require__(3);
 var Output = __webpack_require__(4).Output;
 var InputScanner = __webpack_require__(6).InputScanner;
@@ -826,12 +857,14 @@ var lineBreak = acorn.lineBreak;
 var allLineBreaks = acorn.allLineBreaks;
 
 function Beautifier(source_text, options) {
-  source_text = source_text || '';
+  this._source_text = source_text || '';
   options = options || {};
 
   // Allow the setting of language/file-type specific options
   // with inheritance of overall settings
   options = mergeOpts(options, 'css');
+  options = normalizeOpts(options);
+  this._options = {};
 
   var indentSize = options.indent_size ? parseInt(options.indent_size, 10) : 4;
   var indentCharacter = options.indent_char || ' ';
@@ -843,22 +876,15 @@ function Beautifier(source_text, options) {
   space_around_combinator = space_around_combinator || ((options.space_around_selector_separator === undefined) ? false : options.space_around_selector_separator);
   var eol = options.eol ? options.eol : 'auto';
 
+  // Support passing the source text back with no change
+  this._options.disabled = (options.disabled === undefined) ? false : options.disabled;
+
   if (options.indent_with_tabs) {
     indentCharacter = '\t';
     indentSize = 1;
   }
 
-  if (eol === 'auto') {
-    eol = '\n';
-    if (source_text && lineBreak.test(source_text || '')) {
-      eol = source_text.match(lineBreak)[0];
-    }
-  }
-
   eol = eol.replace(/\\r/, '\r').replace(/\\n/, '\n');
-
-  // HACK: newline parsing inconsistent. This brute force normalizes the input.
-  source_text = source_text.replace(allLineBreaks, '\n');
 
   // tokenizer
   var whitespaceChar = /\s/;
@@ -932,20 +958,6 @@ function Beautifier(source_text, options) {
     return false;
   }
 
-  // printer
-  var baseIndentString = '';
-  var preindent_index = 0;
-  if (source_text && source_text.length) {
-    while ((source_text.charAt(preindent_index) === ' ' ||
-        source_text.charAt(preindent_index) === '\t')) {
-      preindent_index += 1;
-    }
-    baseIndentString = source_text.substring(0, preindent_index);
-    source_text = source_text.substring(preindent_index);
-  }
-
-
-  var singleIndent = new Array(indentSize + 1).join(indentCharacter);
   var indentLevel;
   var nestedLevel;
   var output;
@@ -976,7 +988,35 @@ function Beautifier(source_text, options) {
   /*_____________________--------------------_____________________*/
 
   this.beautify = function() {
+    if (this._options.disabled) {
+      return this._source_text;
+    }
+
+    var source_text = this._source_text;
+    if (eol === 'auto') {
+      eol = '\n';
+      if (source_text && lineBreak.test(source_text || '')) {
+        eol = source_text.match(lineBreak)[0];
+      }
+    }
+
+
+    // HACK: newline parsing inconsistent. This brute force normalizes the input.
+    source_text = source_text.replace(allLineBreaks, '\n');
+
     // reset
+    var singleIndent = new Array(indentSize + 1).join(indentCharacter);
+    var baseIndentString = '';
+    var preindent_index = 0;
+    if (source_text && source_text.length) {
+      while ((source_text.charAt(preindent_index) === ' ' ||
+          source_text.charAt(preindent_index) === '\t')) {
+        preindent_index += 1;
+      }
+      baseIndentString = source_text.substring(0, preindent_index);
+      source_text = source_text.substring(preindent_index);
+    }
+
     output = new Output(singleIndent, baseIndentString);
     input = new InputScanner(source_text);
     indentLevel = 0;

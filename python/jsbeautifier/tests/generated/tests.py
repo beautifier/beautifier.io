@@ -129,6 +129,10 @@ class TestJSBeautifier(unittest.TestCase):
             'var ' + unicode_char(228) + 'x = {\n' +
             '    ' + unicode_char(228) + 'rgerlich: true\n' +
             '};')
+        bt(
+            'var' + unicode_char(160) + unicode_char(3232) + '_' + unicode_char(3232) + ' = "hi";',
+            #  -- output --
+            'var ' + unicode_char(3232) + '_' + unicode_char(3232) + ' = "hi";')
 
 
         #============================================================
@@ -5154,6 +5158,12 @@ class TestJSBeautifier(unittest.TestCase):
 
         self.reset_options()
         #============================================================
+        # Test user pebkac protection, converts dash names to underscored names
+        setattr(self.options, 'end-with-newline', True)
+        test_fragment(None, '\n')
+
+        self.reset_options()
+        #============================================================
         self.options.indent_size = 1
         self.options.indent_char = ' '
         bt('{ one_char() }', "{\n one_char()\n}")
@@ -6283,6 +6293,12 @@ class TestJSBeautifier(unittest.TestCase):
         # Everywhere we do newlines, they should be replaced with opts.eol
         self.options.eol = '\r\\n'
         expectation = expectation.replace('\n', '\r\n')
+        self.options.disabled = True
+        self.assertMultiLineEqual(
+            jsbeautifier.beautify(input, self.options), input or '')
+        self.assertMultiLineEqual(
+            jsbeautifier.beautify('\n\n' + expectation, self.options), '\n\n' + expectation)
+        self.options.disabled = False;
         self.assertMultiLineEqual(
             jsbeautifier.beautify(input, self.options), expectation)
         if input and input.find('\n') != -1:

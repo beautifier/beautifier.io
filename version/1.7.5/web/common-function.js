@@ -2,25 +2,32 @@
 /*exported run_tests, read_settings_from_cookie, beautify, submitIssue */
 var the = {
   use_codemirror: !window.location.href.match(/without-codemirror/),
-  beautifier_file: window.location.href.match(/debug/) ? 'beautifier' : './beautifier.min',
+  // beautifier_file: window.location.href.match(/debug/) ? 'beautifier' : './beautifier.min',
   beautifier: null,
   beautify_in_progress: false,
   editor: null // codemirror editor
 };
 
-requirejs.config({
-  //By default load any module IDs from js/lib
-  baseUrl: 'js/lib',
-  paths: {
-    'beautifier': the.beautifier_file
-  }
-});
+// requirejs.config({
+//   //By default load any module IDs from js/lib
+//   baseUrl: 'js/lib',
+//   paths: {
+//     'beautifier': the.beautifier_file
+//   }
+// });
 
-requirejs(['beautifier'],
-  function(beautifier) {
-    the.beautifier = beautifier;
-  });
+// requirejs(['beautifier'],
+//   function(beautifier) {
+//     the.beautifier = beautifier;
 
+//   });
+
+// shim v1.7.5 files into 1.8.x webpage
+the.beautifier = {
+  js: js_beautify,
+  css: css_beautify,
+  html: html_beautify
+}
 
 function any(a, b) {
   return a || b;

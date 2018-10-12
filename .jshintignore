@@ -9,5 +9,6 @@ tools/**
 test/resources/*
 web/lib/**
 build/**
+version/**
 
 web/google-analytics.js

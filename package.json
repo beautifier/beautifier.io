@@ -1,6 +1,6 @@
 {
   "name": "js-beautify",
-  "version": "1.13.0",
+  "version": "1.13.1",
   "description": "beautifier.io for node",
   "main": "js/index.js",
   "bin": {
@@ -44,6 +44,9 @@
     "Liam Newman <bitwiseman@beautifier.io>"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=10"
+  },
   "dependencies": {
     "config-chain": "^1.1.12",
     "editorconfig": "^0.15.3",
